@@ -17,24 +17,24 @@ public class H2DatabaseExample {
   private static final String JDBC_URL = String.format("jdbc:h2:./%s", CATALOG_NAME);
 
   public static void main(String[] args) throws Exception {
-    Connection con = null;
+    Connection connection = null;
     try {
-      con = DriverManager.getConnection(JDBC_URL);
-      con.setAutoCommit(false);
-      createAndDrop(con);
-      insert(con);
-      con.commit();
+      connection = DriverManager.getConnection(JDBC_URL);
+      connection.setAutoCommit(false);
+      createAndDrop(connection);
+      insert(connection);
+      connection.commit();
 
-      DatabaseMetaData dbMetaData = con.getMetaData();
+      DatabaseMetaData dbMetaData = connection.getMetaData();
       output("schemas", dbMetaData.getSchemas(CATALOG_NAME, SCHEMA_NAME));
       output("tables", dbMetaData.getTables(CATALOG_NAME, SCHEMA_NAME, null, null));
-      select(con);
+      select(connection);
     } catch (SQLException e) {
       e.printStackTrace();
     } finally {
-      if (con != null) {
+      if (connection != null) {
         try {
-          con.close();
+          connection.close();
         } catch (SQLException e) {
           e.printStackTrace();
         }
@@ -42,9 +42,9 @@ public class H2DatabaseExample {
     }
   }
 
-  private static void createAndDrop(Connection con) throws Exception {
+  private static void createAndDrop(Connection connection) throws Exception {
     try (
-      Statement stmt = con.createStatement();
+      Statement statement = connection.createStatement();
     ) {
       String[] sqls = {
           String.format("DROP SCHEMA IF EXISTS %s CASCADE", SCHEMA_NAME),
@@ -52,16 +52,16 @@ public class H2DatabaseExample {
           String.format("CREATE TABLE %s.%s(id INT, name VARCHAR(10))", SCHEMA_NAME, TABLE_NAME)
       };
       for (String sql : sqls) {
-        stmt.addBatch(sql);
+        statement.addBatch(sql);
       }
-      stmt.executeBatch();
+      statement.executeBatch();
     }
   }
 
-  private static void insert(Connection con) throws Exception {
+  private static void insert(Connection connection) throws Exception {
     String sql = String.format("INSERT INTO %s.%s VALUES(?, ?)", SCHEMA_NAME, TABLE_NAME);
     try (
-      PreparedStatement prst = con.prepareStatement(sql);
+      PreparedStatement ps = connection.prepareStatement(sql);
     ) {
       String[] values = {
           "honda", "yamaha", "kawasaki", "suzuki"
@@ -69,11 +69,11 @@ public class H2DatabaseExample {
       for (int i = 0; i < values.length; i++) {
         int id = i + 1;
         String value = values[i];
-        prst.setInt(1, id);
-        prst.setString(2, value);
-        prst.addBatch();
+        ps.setInt(1, id);
+        ps.setString(2, value);
+        ps.addBatch();
       }
-      prst.executeBatch();
+      ps.executeBatch();
     }
   }
 
